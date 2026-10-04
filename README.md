@@ -1,178 +1,205 @@
 const players = [
-  {
-    id: "thniyan",
-    name: "ثنيان",
-    tasks: [
-      "تفريش الأسنان",
-      "الصلاة في وقتها",
-      "أذكار الصباح",
-      "صفحة من القرآن",
-      "حل الواجبات",
-    ],
-  },
-  {
-    id: "alin",
-    name: "الين",
-    tasks: [
-      "تفريش الأسنان",
-      "الصلاة في وقتها",
-      "أذكار الصباح",
-      "صفحة من القرآن",
-      "حل الواجبات",
-    ],
-  },
-  {
-    id: "sultan",
-    name: "سلطان",
-    tasks: [
-      "تفريش الأسنان",
-      "الصلاة في وقتها",
-      "أذكار الصباح",
-      "صفحة من القرآن",
-      "حل الواجبات",
-    ],
-  },
-  {
-    id: "rakan",
-    name: "راكان",
-    tasks: ["الاستحمام", "الرياضة"],
-  },
-  {
-    id: "jood",
-    name: "جود",
-    tasks: ["الاستحمام", "الرياضة"],
-  },
-  {
-    id: "muteb",
-    name: "متعب",
-    tasks: ["الاستحمام", "الرياضة"],
-  },
-  {
-    id: "hind",
-    name: "هند",
-    tasks: ["الاستحمام", "الرياضة"],
-  },
+  "متعب",
+  "هند",
+  "راكان",
+  "جود",
+  "الين",
+  "ثنيان",
+  "سلطان",
 ];
 
-const STORAGE_KEY = "daily-tasks-game-state-v1";
+const tasks = [
+  "🪥 تفريش الأسنان",
+  "🕌 الصلاة في وقتها",
+  "🚿 الاستحمام",
+  "🤲 أذكار الصباح",
+  "📖 قراءة صفحة من القرآن",
+  "📚 إكمال الواجبات",
+];
 
-const playersGrid = document.getElementById("playersGrid");
-const totalTasksEl = document.getElementById("totalTasks");
-const completedTasksEl = document.getElementById("completedTasks");
-const winnerNameEl = document.getElementById("winnerName");
+const STORAGE_KEY = "dailyTasksChallengeStateV1";
+
+const defaultState = () => ({
+  players: players.map((name) => ({
+    name,
+    score: 0,
+    completed: {},
+  })),
+});
+
+const state = loadState();
+
+const leaderboardEl = document.getElementById("leaderboard");
+const playerBoardEl = document.getElementById("playerBoard");
+const winnerTextEl = document.getElementById("winnerText");
 const resetBtn = document.getElementById("resetBtn");
-
-function getInitialState() {
-  const baseState = {};
-  players.forEach((player) => {
-    baseState[player.id] = Array(player.tasks.length).fill(false);
-  });
-  return baseState;
-}
+const toastEl = document.getElementById("toast");
 
 function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return getInitialState();
-
   try {
-    const parsed = JSON.parse(saved);
-    const defaultState = getInitialState();
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return defaultState();
 
-    return players.reduce((acc, player) => {
-      acc[player.id] = Array.isArray(parsed[player.id])
-        ? parsed[player.id].slice(0, player.tasks.length).concat(
-            Array(Math.max(0, player.tasks.length - parsed[player.id].length)).fill(false)
-          )
-        : defaultState[player.id];
-      return acc;
-    }, {});
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed.players)) return defaultState();
+
+    return {
+      players: parsed.players.map((player) => ({
+        name: player.name || "لاعب",
+        score: Number(player.score) || 0,
+        completed: player.completed || {},
+      })),
+    };
   } catch (error) {
-    return getInitialState();
+    console.error("فشل تحميل الحالة:", error);
+    return defaultState();
   }
 }
-
-let state = loadState();
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function renderPlayerCard(player) {
-  const completedCount = state[player.id].filter(Boolean).length;
-  const allCompleted = completedCount === player.tasks.length;
-
-  const card = document.createElement("article");
-  card.className = `player-card ${allCompleted ? "complete" : ""}`;
-
-  const header = document.createElement("div");
-  header.className = "player-header";
-  header.innerHTML = `
-    <h2 class="player-name">${player.name}</h2>
-    <span class="progress-chip">${completedCount}/${player.tasks.length}</span>
-  `;
-
-  const taskList = document.createElement("ul");
-  taskList.className = "task-list";
-
-  player.tasks.forEach((task, taskIndex) => {
-    const item = document.createElement("li");
-    item.className = `task-item ${state[player.id][taskIndex] ? "completed" : ""}`;
-
-    const label = document.createElement("span");
-    label.className = "task-label";
-    label.textContent = task;
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "task-toggle";
-    checkbox.checked = Boolean(state[player.id][taskIndex]);
-    checkbox.setAttribute("aria-label", `${player.name}: ${task}`);
-    checkbox.addEventListener("change", () => {
-      state[player.id][taskIndex] = checkbox.checked;
-      saveState();
-      render();
-    });
-
-    item.append(label, checkbox);
-    taskList.appendChild(item);
+function getSortedPlayers() {
+  return [...state.players].sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return players.indexOf(a.name) - players.indexOf(b.name);
   });
-
-  card.append(header, taskList);
-  return card;
 }
 
-function updateSummary() {
-  const total = players.reduce((sum, player) => sum + player.tasks.length, 0);
-  const completed = players.reduce(
-    (sum, player) => sum + state[player.id].filter(Boolean).length,
-    0
-  );
+function getPlayerByName(name) {
+  return state.players.find((player) => player.name === name);
+}
 
-  totalTasksEl.textContent = total;
-  completedTasksEl.textContent = completed;
+function showToast(message) {
+  toastEl.textContent = message;
+  toastEl.classList.add("show");
 
-  const leaderboard = players
-    .map((player) => ({
-      name: player.name,
-      score: state[player.id].filter(Boolean).length,
-    }))
-    .sort((a, b) => b.score - a.score);
+  clearTimeout(showToast.timeoutId);
+  showToast.timeoutId = setTimeout(() => {
+    toastEl.classList.remove("show");
+  }, 1200);
+}
 
-  winnerNameEl.textContent = leaderboard[0]?.name || "-";
+function renderLeaderboard() {
+  const sortedPlayers = getSortedPlayers();
+  leaderboardEl.innerHTML = sortedPlayers
+    .map((player, index) => {
+      const medal =
+        index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}`;
+      const rankClass = index < 3 ? "special" : "";
+
+      return `
+        <div class="leader-row">
+          <div class="rank-pill ${rankClass}">${medal}</div>
+          <div class="leader-meta">
+            <strong>${player.name}</strong>
+            <span>النقاط: ${player.score} / ${tasks.length}</span>
+          </div>
+          <div class="score-tag">${player.score}</div>
+        </div>
+      `;
+    })
+    .join("");
+
+  const winner = sortedPlayers[0];
+  winnerTextEl.textContent = winner ? `${winner.name} (${winner.score} نقطة)` : "—";
+}
+
+function renderBoard() {
+  playerBoardEl.innerHTML = state.players
+    .map((player) => {
+      const totalTasks = tasks.length;
+      const completedCount = Object.keys(player.completed).filter(Boolean).length;
+      const percent = (player.score / totalTasks) * 100;
+
+      return `
+        <article class="player-card">
+          <div class="player-head">
+            <h3 class="player-name">${player.name}</h3>
+            <div class="player-score">
+              <span>⭐</span>
+              <span>${player.score}</span>
+            </div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-top">
+              <span>التقدم</span>
+              <strong>${player.score}/${totalTasks}</strong>
+            </div>
+            <div class="progress-bar" aria-label="تقدم ${player.name}">
+              <div class="progress-fill" style="width: ${percent}%"></div>
+            </div>
+          </div>
+
+          <div class="task-grid">
+            ${tasks
+              .map((taskName, taskIndex) => {
+                const taskId = `task-${taskIndex + 1}`;
+                const done = Boolean(player.completed[taskId]);
+                return `
+                  <div class="task-item">
+                    <span class="task-label">${taskName}</span>
+                    <button
+                      class="task-btn ${done ? "done" : ""}"
+                      type="button"
+                      data-player-name="${player.name}"
+                      data-task-id="${taskId}"
+                      ${done ? "disabled" : ""}
+                    >
+                      ${done ? "تم الإنجاز" : "إضافة نقطة"}
+                    </button>
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function completeTask(playerName, taskId) {
+  const player = getPlayerByName(playerName);
+  if (!player || player.completed[taskId]) return;
+
+  player.completed[taskId] = true;
+  player.score += 1;
+  saveState();
+  render();
+  showToast(`+1 نقطة لـ ${player.name}`);
+}
+
+function resetDay() {
+  const confirmation = confirm("هل تريد إعادة تعيين اليوم؟ سيتم حذف جميع النقاط الحالية.");
+  if (!confirmation) return;
+
+  const freshState = defaultState();
+  state.players = freshState.players;
+  saveState();
+  render();
+  showToast("تم إعادة تعيين اليوم بنجاح");
 }
 
 function render() {
-  playersGrid.innerHTML = "";
-  players.forEach((player) => {
-    playersGrid.appendChild(renderPlayerCard(player));
-  });
-  updateSummary();
+  renderLeaderboard();
+  renderBoard();
 }
 
-resetBtn.addEventListener("click", () => {
-  state = getInitialState();
-  saveState();
-  render();
+resetBtn.addEventListener("click", resetDay);
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest(".task-btn");
+  if (!button) return;
+
+  const playerName = button.dataset.playerName;
+  const taskId = button.dataset.taskId;
+
+  if (!playerName || !taskId) return;
+
+  completeTask(playerName, taskId);
 });
 
 render();

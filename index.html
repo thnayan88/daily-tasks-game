@@ -3,36 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>لعبة إكمال المهام اليومية</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>تحدي المهام اليومية</title>
+    <meta
+      name="description"
+      content="لعبة تحدي المهام اليومية - لوحة منافسة بين اللاعبين ومتابعة التقدم اليومي."
+    />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">مهامي اليومية</p>
-          <h1>لعبة إكمال المهام اليومية</h1>
+    <div class="page-shell">
+      <header class="app-header">
+        <div class="brand-wrap">
+          <div class="brand-icon">🏆</div>
+          <div>
+            <p class="eyebrow">لعبة يومية</p>
+            <h1>تحدي المهام اليومية</h1>
+          </div>
         </div>
-        <button id="resetBtn" class="reset-btn">إعادة التعيين</button>
+
+        <div class="header-summary">
+          <div class="summary-card">
+            <span class="summary-label">الفائز اليوم</span>
+            <strong id="winnerText">—</strong>
+          </div>
+          <button id="resetBtn" class="reset-btn" type="button">إعادة تعيين اليوم</button>
+        </div>
       </header>
 
-      <section class="summary">
-        <div class="summary-card">
-          <span>إجمالي المهام</span>
-          <strong id="totalTasks">0</strong>
-        </div>
-        <div class="summary-card success">
-          <span>المهام المنجزة</span>
-          <strong id="completedTasks">0</strong>
-        </div>
-        <div class="summary-card winner">
-          <span>الفائز اليوم</span>
-          <strong id="winnerName">-</strong>
-        </div>
-      </section>
+      <main class="game-layout">
+        <section class="panel leaderboard-panel">
+          <div class="panel-header">
+            <h2>ترتيب اللاعبين</h2>
+            <span class="badge">7 لاعبين</span>
+          </div>
+          <div id="leaderboard" class="leaderboard"></div>
+        </section>
 
-      <main id="playersGrid" class="players-grid" aria-live="polite"></main>
+        <section class="panel board-panel">
+          <div class="panel-header">
+            <h2>لوحة المهام</h2>
+            <span class="badge">6 مهام</span>
+          </div>
+          <div id="playerBoard" class="player-board"></div>
+        </section>
+      </main>
     </div>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
 
     <script src="script.js"></script>
   </body>
