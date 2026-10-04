@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لعبة إكمال المهام اليومية</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">مهامي اليومية</p>
+          <h1>لعبة إكمال المهام اليومية</h1>
+        </div>
+        <button id="resetBtn" class="reset-btn">إعادة التعيين</button>
+      </header>
+
+      <section class="summary">
+        <div class="summary-card">
+          <span>إجمالي المهام</span>
+          <strong id="totalTasks">0</strong>
+        </div>
+        <div class="summary-card success">
+          <span>المهام المنجزة</span>
+          <strong id="completedTasks">0</strong>
+        </div>
+        <div class="summary-card winner">
+          <span>الفائز اليوم</span>
+          <strong id="winnerName">-</strong>
+        </div>
+      </section>
+
+      <main id="playersGrid" class="players-grid" aria-live="polite"></main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
